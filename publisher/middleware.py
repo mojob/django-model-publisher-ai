@@ -12,7 +12,7 @@ class PublisherMiddleware(MiddlewareMixin):
 
     @staticmethod
     def is_draft(request):
-        authenticated = request.user.is_authenticated() and request.user.is_staff
+        authenticated = request.user.is_authenticated and request.user.is_staff
         is_draft = 'edit' in request.GET and authenticated
         return is_draft
 
