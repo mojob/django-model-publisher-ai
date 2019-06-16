@@ -17,6 +17,10 @@ class PublisherManager(models.Manager):
     def published(self):
         from .models import PublisherModelBase
         return self.filter(publisher_is_draft=PublisherModelBase.STATE_PUBLISHED)
+    
+    def published(self):
+        from .models import PublisherModelBase
+        return self.filter(publisher_is_draft=PublisherModelBase.STATE_UNPUBLISHED)
 
     def current(self):
         if get_draft_status():

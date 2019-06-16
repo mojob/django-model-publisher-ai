@@ -14,28 +14,33 @@ from .signals import (
 
 
 class PublisherModelBase(models.Model):
-    STATE_PUBLISHED = False
-    STATE_DRAFT = True
-
     publisher_linked = models.OneToOneField(
         'self',
         related_name='publisher_draft',
         null=True,
         editable=False,
-        on_delete=models.SET_NULL)
+        on_delete=models.SET_NULL,
+    )
     publisher_is_draft = models.BooleanField(
-        default=STATE_DRAFT,
+        default=True,
         editable=False,
-        db_index=True)
+        db_index=True,
+    )
+    publisher_is_published = models.BooleanField(
+        default=True,
+        db_index=True,
+    )
     publisher_modified_at = models.DateTimeField(
         default=timezone.now,
-        editable=False)
+        editable=False,
+    )
 
     publisher_published_at = models.DateTimeField(blank=True, null=True)
 
     publisher_fields = (
         'publisher_linked',
         'publisher_is_draft',
+        'publisher_is_published',
         'publisher_modified_at',
         'publisher_draft',
     )
@@ -54,11 +59,11 @@ class PublisherModelBase(models.Model):
 
     @property
     def is_draft(self):
-        return self.publisher_is_draft == self.STATE_DRAFT
+        return self.publisher_is_draft
 
     @property
     def is_published(self):
-        return self.publisher_is_draft == self.STATE_PUBLISHED
+        return self.publisher_is_published
 
     @property
     def is_dirty(self):
@@ -104,15 +109,13 @@ class PublisherModelBase(models.Model):
             # In some random cases a placeholder has been shared between the draft and published
             # version of the page
             self.patch_placeholders(draft_obj)
-
-            # Remove the current published record
-            draft_obj.publisher_linked.delete()
+            return;
 
         # Duplicate the draft object and set to published
         publish_obj = self.__class__.objects.get(pk=self.pk)
         for fld in self.publisher_publish_empty_fields:
             setattr(publish_obj, fld, None)
-        publish_obj.publisher_is_draft = self.STATE_PUBLISHED
+        publish_obj.publisher_is_draft = False
         publish_obj.publisher_published_at = draft_obj.publisher_published_at
 
         # Link the published obj to the draft version
@@ -160,40 +163,10 @@ class PublisherModelBase(models.Model):
             return
 
         publisher_pre_unpublish.send(sender=self.__class__, instance=self)
-        self.publisher_linked.delete()
-        self.publisher_linked = None
-        self.publisher_published_at = None
+        self.publisher_linked.publisher_is_published = False
         self.save()
         publisher_post_unpublish.send(sender=self.__class__, instance=self)
 
-    @assert_draft
-    def revert_to_public(self):
-        """
-        @todo Relook at this method. It would be nice if the draft pk did not have to change
-        @toavoid Updates self to a alternative instance
-        @toavoid self.__class__ = draft_obj.__class__
-        @toavoid self.__dict__ = draft_obj.__dict__
-        """
-        if not self.publisher_linked:
-            return
-
-        # Get published obj and delete the draft
-        draft_obj = self
-        publish_obj = self.publisher_linked
-
-        draft_obj.publisher_linked = None
-        draft_obj.save()
-        draft_obj.delete()
-
-        # Mark the published object as a draft
-        draft_obj = publish_obj
-        publish_obj = None
-
-        draft_obj.publisher_is_draft = draft_obj.STATE_DRAFT
-        draft_obj.save()
-        draft_obj.publish()
-
-        return draft_obj
 
     def get_unique_together(self):
         return self._meta.unique_together
