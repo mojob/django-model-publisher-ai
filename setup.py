@@ -30,7 +30,7 @@ setup(
     long_description=get_readme(),
     author='Marcin Urbanski',
     author_email='marcin@mojob.io',
-    url='https://github.com/mojob/django-model-publisher-mj',
+    url='https://github.com/mojob/mojob-publisher',
     packages=find_packages(exclude=['example*', ]),
     include_package_data=True,
     classifiers=[
