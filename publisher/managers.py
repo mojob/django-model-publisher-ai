@@ -11,16 +11,13 @@ class PublisherManager(models.Manager):
         models.signals.pre_delete.connect(publisher_pre_delete, model)
 
     def drafts(self):
-        from .models import PublisherModelBase
-        return self.filter(publisher_is_draft=PublisherModelBase.STATE_DRAFT)
+        return self.filter(publisher_is_draft=True)
 
     def published(self):
-        from .models import PublisherModelBase
-        return self.filter(publisher_is_draft=PublisherModelBase.STATE_PUBLISHED)
-    
-    def published(self):
-        from .models import PublisherModelBase
-        return self.filter(publisher_is_draft=PublisherModelBase.STATE_UNPUBLISHED)
+        return self.filter(publisher_is_published=True)
+
+    def unpublished(self):
+        return self.filter(publisher_is_draft=False, publisher_is_published=False)
 
     def current(self):
         if get_draft_status():

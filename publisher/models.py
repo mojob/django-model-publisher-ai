@@ -109,7 +109,6 @@ class PublisherModelBase(models.Model):
             # In some random cases a placeholder has been shared between the draft and published
             # version of the page
             self.patch_placeholders(draft_obj)
-            return;
 
         # Duplicate the draft object and set to published
         publish_obj = self.__class__.objects.get(pk=self.pk)
