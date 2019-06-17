@@ -2,7 +2,13 @@
 Credits
 =======
 
-Development Lead
+Development Team (from mojob)
+----------------
+
+* Marcin Urbanski
+* Brage G. Staven
+
+Development Lead (from django-model-publisher)
 ----------------
 
 * Lee Solway

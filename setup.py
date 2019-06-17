@@ -24,12 +24,12 @@ def get_readme():
 
 
 setup(
-    name='django-model-publisher-mj',
+    name='mojob-publisher',
     version=__import__('publisher').get_version().replace(' ', '-'),
     description="""Handy mixin/abstract class for providing a "publisher workflow" to arbitrary Django models.""",
     long_description=get_readme(),
-    author='Rich Temple',
-    author_email='rtemple@celerity.com',
+    author='Marcin Urbanski',
+    author_email='marcin@mojob.io',
     url='https://github.com/mojob/django-model-publisher-mj',
     packages=find_packages(exclude=['example*', ]),
     include_package_data=True,
