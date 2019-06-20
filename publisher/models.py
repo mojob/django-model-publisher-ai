@@ -34,8 +34,9 @@ class PublisherModelBase(models.Model):
         default=timezone.now,
         editable=False,
     )
-
-    publisher_published_at = models.DateTimeField(blank=True, null=True)
+    publisher_published_at = models.DateTimeField(
+        blank=True, null=True
+    )
 
     publisher_fields = (
         'publisher_linked',
@@ -65,31 +66,38 @@ class PublisherModelBase(models.Model):
     def is_published(self):
         return self.publisher_is_published
 
-    @property
-    def is_dirty(self):
-        if not self.is_draft:
-            return False
+    @assert_draft
+    def clone(self, overrides=None):
+        if overrides is None:
+            overrides = []
+        # Reference self for readability
+        draft_obj = self
+        # Duplicate the draft object and set to published
+        cloned_obj = self.__class__.objects.get(pk=self.pk)
+        cloned_obj.id = None
+        cloned_obj.publisher_linked = None
+        cloned_obj.publisher_draft = None
+        cloned_obj.publisher_is_draft = True
+        cloned_obj.publisher_is_published = False
+        cloned_obj.publisher_published_at = None
 
-        # If the record has not been published assume dirty
-        if not self.publisher_linked:
-            return True
+        for override_field in overrides:
+            setattr(cloned_obj, override_field[0], override_field[1])
 
-        if self.publisher_modified_at > self.publisher_linked.publisher_modified_at:
-            return True
+        cloned_obj.save()
 
-        # Get all placeholders + their plugins to find their modified date
-        for placeholder_field in self.get_placeholder_fields():
-            placeholder = getattr(self, placeholder_field.name)
-            for plugin in placeholder.get_plugins_list():
-                if plugin.changed_date > self.publisher_linked.publisher_modified_at:
-                    return True
+        # Check for translations, if so duplicate the object
+        self.clone_translations(draft_obj, cloned_obj)
 
-        return False
+        # Clone relationships
+        self.clone_relations(draft_obj, cloned_obj)
+
+        return cloned_obj
 
     @assert_draft
-    def publish(self):
-        if not self.is_draft:
-            return
+    def publish(self, overrides=None):
+        if overrides is None:
+            overrides = []
 
         publisher_pre_publish.send(sender=self.__class__, instance=self)
 
@@ -98,25 +106,29 @@ class PublisherModelBase(models.Model):
 
         # Set the published date if this is the first time the page has been published
         if not draft_obj.publisher_linked:
-            if draft_obj.publisher_published_at is None:
-                draft_obj.publisher_published_at = timezone.now()
+            draft_obj.publisher_published_at = timezone.now()
 
         # Duplicate the draft object and set to published
         publish_obj = self.__class__.objects.get(pk=self.pk)
-        for fld in self.publisher_publish_empty_fields:
-            setattr(publish_obj, fld, None)
+
+        if draft_obj.publisher_linked is None:
+            publish_obj.id = None
+        else:
+            publish_obj.id = draft_obj.publisher_linked.id
+
+        publish_obj.publisher_linked = None
+        publish_obj.publisher_draft = draft_obj
         publish_obj.publisher_is_draft = False
+        publish_obj.publisher_is_published = True
         publish_obj.publisher_published_at = draft_obj.publisher_published_at
 
-        # Link the published obj to the draft version
-        # publish_obj.publisher_linked = draft_obj
-        # publish_obj.save()
+        for override_field in overrides:
+            setattr(publish_obj, override_field[0], override_field[1])
+
+        publish_obj.save()
 
         # Check for translations, if so duplicate the object
         self.clone_translations(draft_obj, publish_obj)
-
-        # Clone any placeholder fields into the new published object
-        self.clone_placeholder(draft_obj, publish_obj)
 
         # Clone relationships
         self.clone_relations(draft_obj, publish_obj)
@@ -157,58 +169,11 @@ class PublisherModelBase(models.Model):
                 translation.master = dst_obj
                 translation.save()
 
-    def clone_placeholder(self, src_obj, dst_obj):
-        try:
-            from cms.utils.copy_plugins import copy_plugins_to
-        except ImportError:
-            return
-
-        for field in self.get_placeholder_fields(src_obj):
-            src_placeholder = getattr(src_obj, field.name)
-            dst_placeholder = getattr(dst_obj, field.name)
-
-            dst_placeholder.pk = None
-            dst_placeholder.save()
-
-            setattr(dst_obj, field.name, dst_placeholder)
-            dst_obj.save()
-
-            src_plugins = src_placeholder.get_plugins_list()
-
-            # CMS automatically generates a new Placeholder ID
-            copy_plugins_to(src_plugins, dst_placeholder)
-
     def clone_relations(self, src_obj, dst_obj):
         """
         Since copying relations is so complex, leave this to the implementing class
         """
         pass
-
-    def get_placeholder_fields(self, obj=None):
-        placeholder_fields = []
-
-        try:
-            from cms.models.placeholdermodel import Placeholder
-        except ImportError:
-            return placeholder_fields
-
-        if obj is None:
-            obj = self
-
-        model_fields = obj.__class__._meta.get_fields()
-
-        for field in model_fields:
-            if field in self.publisher_ignore_fields:
-                continue
-
-            try:
-                placeholder = getattr(obj, field.name)
-                if isinstance(placeholder, Placeholder):
-                    placeholder_fields.append(field)
-            except (ObjectDoesNotExist, AttributeError):
-                continue
-
-        return placeholder_fields
 
     def update_modified_at(self):
         self.publisher_modified_at = timezone.now()

@@ -14,7 +14,7 @@ class PublisherManager(models.Manager):
         return self.filter(publisher_is_draft=True)
 
     def published(self):
-        return self.filter(publisher_is_published=True)
+        return self.filter(publisher_publisher_is_published=True)
 
     def unpublished(self):
         return self.filter(publisher_is_draft=False, publisher_is_published=False)
