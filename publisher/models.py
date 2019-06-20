@@ -91,9 +91,6 @@ class PublisherModelBase(models.Model):
         if not self.is_draft:
             return
 
-        if not self.is_dirty:
-            return
-
         publisher_pre_publish.send(sender=self.__class__, instance=self)
 
         # Reference self for readability
@@ -104,12 +101,6 @@ class PublisherModelBase(models.Model):
             if draft_obj.publisher_published_at is None:
                 draft_obj.publisher_published_at = timezone.now()
 
-        if draft_obj.publisher_linked:
-            # Duplicate placeholder patch to prevent plugins from being deleted
-            # In some random cases a placeholder has been shared between the draft and published
-            # version of the page
-            self.patch_placeholders(draft_obj)
-
         # Duplicate the draft object and set to published
         publish_obj = self.__class__.objects.get(pk=self.pk)
         for fld in self.publisher_publish_empty_fields:
@@ -119,7 +110,7 @@ class PublisherModelBase(models.Model):
 
         # Link the published obj to the draft version
         # publish_obj.publisher_linked = draft_obj
-        publish_obj.save()
+        # publish_obj.save()
 
         # Check for translations, if so duplicate the object
         self.clone_translations(draft_obj, publish_obj)
