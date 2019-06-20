@@ -138,7 +138,6 @@ class PublisherModelBase(models.Model):
         self.save()
         publisher_post_unpublish.send(sender=self.__class__, instance=self)
 
-
     def get_unique_together(self):
         return self._meta.unique_together
 
