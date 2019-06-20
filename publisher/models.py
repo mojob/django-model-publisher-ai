@@ -126,26 +126,7 @@ class PublisherModelBase(models.Model):
 
         publisher_publish_pre_save_draft.send(sender=draft_obj.__class__, instance=draft_obj)
 
-        draft_obj.save(suppress_modified=True)
-
         publisher_post_publish.send(sender=draft_obj.__class__, instance=draft_obj)
-
-    @assert_draft
-    def patch_placeholders(self, draft_obj):
-        try:
-            from cms.utils.copy_plugins import copy_plugins_to  # noqa
-        except ImportError:
-            return
-
-        published_obj = draft_obj.publisher_linked
-
-        for field in self.get_placeholder_fields(draft_obj):
-            draft_placeholder = getattr(draft_obj, field.name)
-            published_placeholder = getattr(published_obj, field.name)
-
-            if draft_placeholder.pk == published_placeholder.pk:
-                published_placeholder.pk = None
-                published_placeholder.save()
 
     @assert_draft
     def unpublish(self):
