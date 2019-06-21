@@ -136,6 +136,8 @@ class PublisherModelBase(models.Model):
         # Link the draft obj to the current published version
         draft_obj.publisher_linked = publish_obj
 
+        draft_obj.save()
+
         publisher_publish_pre_save_draft.send(sender=draft_obj.__class__, instance=draft_obj)
 
         publisher_post_publish.send(sender=draft_obj.__class__, instance=draft_obj)
