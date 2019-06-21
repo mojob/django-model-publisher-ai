@@ -149,6 +149,7 @@ class PublisherModelBase(models.Model):
 
         publisher_pre_unpublish.send(sender=self.__class__, instance=self)
         self.publisher_linked.publisher_is_published = False
+        self.publisher_linked.save()
         self.save()
         publisher_post_unpublish.send(sender=self.__class__, instance=self)
 
