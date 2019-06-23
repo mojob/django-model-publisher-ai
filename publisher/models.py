@@ -1,6 +1,5 @@
 from django.utils import timezone
 from django.db import models
-from django.core.exceptions import ObjectDoesNotExist
 
 from .managers import PublisherManager
 from .utils import assert_draft
@@ -66,8 +65,19 @@ class PublisherModelBase(models.Model):
     def is_published(self):
         return self.publisher_is_published
 
+    @property
+    def is_dirty(self):
+        if not self.is_draft:
+            return False
+
+        if not self.publisher_linked:
+            return True
+
+        if self.publisher_modified_at > self.publisher_linked.publisher_modified_at:
+            return True
+
     @assert_draft
-    def clone(self, overrides=None):
+    def clone(self, overrides=None, deep=False):
         if overrides is None:
             overrides = []
         # Reference self for readability
@@ -90,7 +100,7 @@ class PublisherModelBase(models.Model):
         self.clone_translations(draft_obj, cloned_obj)
 
         # Clone relationships
-        self.clone_relations(draft_obj, cloned_obj)
+        self.clone_relations(draft_obj, cloned_obj, deep)
 
         return cloned_obj
 
@@ -125,6 +135,8 @@ class PublisherModelBase(models.Model):
         for override_field in overrides:
             setattr(publish_obj, override_field[0], override_field[1])
 
+        draft_obj.save()
+
         publish_obj.save()
 
         # Check for translations, if so duplicate the object
@@ -136,11 +148,44 @@ class PublisherModelBase(models.Model):
         # Link the draft obj to the current published version
         draft_obj.publisher_linked = publish_obj
 
-        draft_obj.save()
+        draft_obj.save(suppress_modified=True)
 
         publisher_publish_pre_save_draft.send(sender=draft_obj.__class__, instance=draft_obj)
 
         publisher_post_publish.send(sender=draft_obj.__class__, instance=draft_obj)
+
+    @assert_draft
+    def discard(self, overrides=None):
+        if overrides is None:
+            overrides = []
+
+        # Reference self for readability
+        draft_obj = self
+
+        # If the draft is not published, delete it
+        if not draft_obj.publisher_linked:
+            draft_obj.delete()
+
+        # Duplicate the draft object and set to published
+        new_draft_obj = self.__class__.objects.get(publish_linked=self.publisher_linked)
+
+        # Copy ids from published to draft
+        new_draft_obj.publisher_linked_id = new_draft_obj.id
+        new_draft_obj.id = draft_obj.id
+        new_draft_obj.publisher_is_draft = True
+        new_draft_obj.publisher_is_published = False
+        for override_field in overrides:
+            setattr(new_draft_obj, override_field[0], override_field[1])
+
+        draft_obj.save(suppress_modified=True)
+
+        # Check for translations, if so duplicate the object
+        self.clone_translations(draft_obj, new_draft_obj)
+
+        # Clone relationships
+        self.clone_relations(draft_obj, new_draft_obj)
+
+        draft_obj.save(suppress_modified=True)
 
     @assert_draft
     def unpublish(self):
@@ -172,7 +217,7 @@ class PublisherModelBase(models.Model):
                 translation.master = dst_obj
                 translation.save()
 
-    def clone_relations(self, src_obj, dst_obj):
+    def clone_relations(self, src_obj, dst_obj, deep=True):
         """
         Since copying relations is so complex, leave this to the implementing class
         """
