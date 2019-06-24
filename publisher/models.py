@@ -135,9 +135,9 @@ class PublisherModelBase(models.Model):
         for override_field in overrides:
             setattr(publish_obj, override_field[0], override_field[1])
 
-        draft_obj.save()
-
         publish_obj.save()
+
+        draft_obj.save()
 
         # Check for translations, if so duplicate the object
         self.clone_translations(draft_obj, publish_obj)
