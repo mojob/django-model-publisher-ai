@@ -77,7 +77,7 @@ class PublisherModelBase(models.Model):
             return True
 
     @assert_draft
-    def clone(self, overrides=None, deep=False):
+    def clone(self, overrides=None):
         if overrides is None:
             overrides = []
         # Reference self for readability
@@ -100,7 +100,7 @@ class PublisherModelBase(models.Model):
         self.clone_translations(draft_obj, cloned_obj)
 
         # Clone relationships
-        self.clone_relations(draft_obj, cloned_obj, deep)
+        self.clone_relations(draft_obj, cloned_obj)
 
         return cloned_obj
 
@@ -219,7 +219,7 @@ class PublisherModelBase(models.Model):
                 translation.master = dst_obj
                 translation.save()
 
-    def clone_relations(self, src_obj, dst_obj, deep=True):
+    def clone_relations(self, src_obj, dst_obj):
         """
         Since copying relations is so complex, leave this to the implementing class
         """
