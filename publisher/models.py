@@ -105,7 +105,7 @@ class PublisherModelBase(models.Model):
         return cloned_obj
 
     @assert_draft
-    def publish(self, overrides=None):
+    def publish(self, overrides=None, dry_publish=False):
         if overrides is None:
             overrides = []
 
@@ -113,10 +113,6 @@ class PublisherModelBase(models.Model):
 
         # Reference self for readability
         draft_obj = self
-
-        # Set the published date if this is the first time the page has been published
-        if not draft_obj.publisher_linked:
-            draft_obj.publisher_published_at = timezone.now()
 
         # Duplicate the draft object and set to published
         publish_obj = self.__class__.objects.get(pk=self.pk)
@@ -130,7 +126,8 @@ class PublisherModelBase(models.Model):
         publish_obj.publisher_draft = draft_obj
         publish_obj.publisher_is_draft = False
         publish_obj.publisher_is_published = True
-        publish_obj.publisher_published_at = draft_obj.publisher_published_at
+        if not dry_publish:
+           publish_obj.publisher_published_at = timezone.now()
 
         for override_field in overrides:
             setattr(publish_obj, override_field[0], override_field[1])
