@@ -26,7 +26,7 @@ class PublisherModelBase(models.Model):
         db_index=True,
     )
     publisher_is_published = models.BooleanField(
-        default=True,
+        default=False,
         db_index=True,
     )
     publisher_modified_at = models.DateTimeField(
