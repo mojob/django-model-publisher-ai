@@ -12,6 +12,15 @@ from .signals import (
 )
 
 
+class PublishableItem(models.Model):
+    publisher_linked = models.OneToOneField(
+        'self',
+        related_name='publisher_draft',
+        null=True,
+        on_delete=models.SET_NULL,
+    )
+
+
 class PublisherModelBase(models.Model):
     publisher_linked = models.OneToOneField(
         'self',
@@ -127,7 +136,7 @@ class PublisherModelBase(models.Model):
         publish_obj.publisher_is_draft = False
         publish_obj.publisher_is_published = True
         if not dry_publish:
-           publish_obj.publisher_published_at = timezone.now()
+            publish_obj.publisher_published_at = timezone.now()
 
         for override_field in overrides:
             setattr(publish_obj, override_field[0], override_field[1])
