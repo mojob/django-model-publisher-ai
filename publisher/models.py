@@ -109,9 +109,6 @@ class PublisherModelBase(models.Model):
 
         cloned_obj.save()
 
-        # Check for translations, if so duplicate the object
-        self.clone_translations(draft_obj, cloned_obj)
-
         # Clone relationships
         self.clone_relations(draft_obj, cloned_obj)
 
@@ -149,11 +146,8 @@ class PublisherModelBase(models.Model):
 
         draft_obj.save()
 
-        # Check for translations, if so duplicate the object
-        self.clone_translations(draft_obj, publish_obj)
-
         # Clone relationships
-        self.clone_relations(draft_obj, publish_obj)
+        self.publish_relations(draft_obj, publish_obj)
 
         # Link the draft obj to the current published version
         draft_obj.publisher_linked = publish_obj
@@ -191,9 +185,6 @@ class PublisherModelBase(models.Model):
 
         draft_obj.save(suppress_modified=True)
 
-        # Check for translations, if so duplicate the object
-        self.clone_translations(draft_obj, new_draft_obj)
-
         # Clone relationships
         self.clone_relations(draft_obj, new_draft_obj)
 
@@ -221,17 +212,15 @@ class PublisherModelBase(models.Model):
         except models.fields.FieldDoesNotExist:
             return None
 
-    @staticmethod
-    def clone_translations(src_obj, dst_obj):
-        if hasattr(src_obj, 'translations'):
-            for translation in src_obj.translations.all():
-                translation.pk = None
-                translation.master = dst_obj
-                translation.save()
-
     def clone_relations(self, src_obj, dst_obj):
         """
         Since copying relations is so complex, leave this to the implementing class
+        """
+        pass
+
+    def publish_relations(self, src_obj, dst_obj):
+        """
+        Since publishing relations is so complex, leave this to the implementing class
         """
         pass
 
