@@ -13,10 +13,11 @@ from .signals import (
 
 
 class PublishableItem(models.Model):
-    publisher_linked = models.ForeignKey(
+    publisher_linked = models.OneToOneField(
         'self',
         related_name='publisher_draft',
-        null=True,blank=True,
+        null=True,
+        editable=False,
         on_delete=models.SET_NULL,
     )
 
