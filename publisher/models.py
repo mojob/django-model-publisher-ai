@@ -20,6 +20,9 @@ class PublishableItem(models.Model):
         on_delete=models.SET_NULL,
     )
 
+    class Meta:
+        abstract = True
+
 
 class PublisherModelBase(models.Model):
     publisher_linked = models.OneToOneField(
