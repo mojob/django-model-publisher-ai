@@ -76,7 +76,9 @@ class PublisherModelBase(models.Model):
 
     @property
     def is_published(self):
-        return self.publisher_is_published
+        return self.publisher_linked.publisher_is_published \
+            if self.is_draft and self.publisher_linked \
+            else self.publisher_is_published
 
     @property
     def is_dirty(self):
