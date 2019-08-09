@@ -140,7 +140,9 @@ class PublisherModelBase(models.Model):
         published_for_first_time = not publish_obj.publisher_published_at and not dry_publish
 
         if not dry_publish:
-            publish_obj.publisher_published_at = timezone.now()
+            now = timezone.now()
+            draft_obj.publisher_published_at = now
+            publish_obj.publisher_published_at = now
 
         for override_field in overrides:
             setattr(publish_obj, override_field[0], override_field[1])
