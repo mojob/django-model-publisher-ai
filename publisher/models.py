@@ -121,8 +121,6 @@ class PublisherModelBase(models.Model):
         if overrides is None:
             overrides = []
 
-        publisher_pre_publish.send(sender=self.__class__, instance=self)
-
         # Reference self for readability
         draft_obj = self
 
@@ -138,11 +136,17 @@ class PublisherModelBase(models.Model):
         publish_obj.publisher_draft = draft_obj
         publish_obj.publisher_is_draft = False
         publish_obj.publisher_is_published = True
+
+        published_for_first_time = not publish_obj.publisher_published_at and not dry_publish
+
         if not dry_publish:
             publish_obj.publisher_published_at = timezone.now()
 
         for override_field in overrides:
             setattr(publish_obj, override_field[0], override_field[1])
+
+        if not dry_publish:
+            publisher_pre_publish.send(sender=self.__class__, instance=publish_obj)
 
         publish_obj.save()
 
@@ -160,7 +164,8 @@ class PublisherModelBase(models.Model):
 
         publisher_publish_pre_save_draft.send(sender=draft_obj.__class__, instance=draft_obj)
 
-        publisher_post_publish.send(sender=draft_obj.__class__, instance=draft_obj)
+        if published_for_first_time:
+            publisher_post_publish.send(sender=publish_obj.__class__, instance=publish_obj)
 
     @assert_draft
     def discard(self, overrides=None):
