@@ -133,11 +133,12 @@ class PublisherModelBase(models.Model):
             publish_obj.id = None
         else:
             publish_obj.id = draft_obj.publisher_linked.id
+            publish_obj.publisher_is_published = draft_obj.publisher_linked.publisher_is_published
+            publish_obj.publisher_published_at = draft_obj.publisher_linked.publisher_published_at
 
         publish_obj.publisher_linked = None
         publish_obj.publisher_draft = draft_obj
         publish_obj.publisher_is_draft = False
-        # publish_obj.publisher_is_published = True
 
         if not dry_publish:
             now = timezone.now()
