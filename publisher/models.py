@@ -9,6 +9,8 @@ from .signals import (
     publisher_post_publish,
     publisher_pre_unpublish,
     publisher_post_unpublish,
+    publisher_pre_submit_changes,
+    publisher_post_submit_changes,
 )
 
 
@@ -115,6 +117,56 @@ class PublisherModelBase(models.Model):
         self.clone_relations(draft_obj, cloned_obj)
 
         return cloned_obj
+
+    @assert_draft
+    def submit_changes(self, overrides=None, dry_publish=False):
+        if overrides is None:
+            overrides = []
+
+        # Reference self for readability
+        draft_obj = self
+
+        # Duplicate the draft object and set to published
+        publish_obj = self.__class__.objects.get(pk=self.pk)
+
+        if draft_obj.publisher_linked is None:
+            publish_obj.id = None
+        else:
+            publish_obj.id = draft_obj.publisher_linked.id
+
+        publish_obj.publisher_linked = None
+        publish_obj.publisher_draft = draft_obj
+        publish_obj.publisher_is_draft = False
+        # publish_obj.publisher_is_published = True
+
+        if not dry_publish:
+            now = timezone.now()
+            draft_obj.publisher_modified_at = now
+            publish_obj.publisher_modified_at = now
+
+        for override_field in overrides:
+            setattr(publish_obj, override_field[0], override_field[1])
+
+        if not dry_publish:
+            publisher_pre_submit_changes.send(sender=self.__class__, instance=publish_obj)
+
+        publish_obj.save()
+
+        draft_obj.save()
+
+        # Clone relationships
+        self.submit_changes_to_relations(draft_obj, publish_obj)
+
+        # Link the draft obj to the current published version
+        draft_obj.publisher_linked = publish_obj
+
+        draft_obj.publisher_linked.save()
+
+        draft_obj.save(suppress_modified=True)
+
+        publisher_publish_pre_save_draft.send(sender=draft_obj.__class__, instance=draft_obj)
+
+        publisher_post_submit_changes.send(sender=draft_obj.__class__, instance=draft_obj)
 
     @assert_draft
     def publish(self, overrides=None, dry_publish=False):
@@ -230,6 +282,12 @@ class PublisherModelBase(models.Model):
     def publish_relations(self, src_obj, dst_obj):
         """
         Since publishing relations is so complex, leave this to the implementing class
+        """
+        pass
+
+    def submit_changes_to_relations(self, src_obj, dst_obj):
+        """
+        Since submitting changes to relations is so complex, leave this to the implementing class
         """
         pass
 
