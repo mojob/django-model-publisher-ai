@@ -134,7 +134,6 @@ class PublisherModelBase(models.Model):
         else:
             publish_obj.id = draft_obj.publisher_linked.id
             publish_obj.publisher_is_published = draft_obj.publisher_linked.publisher_is_published
-            publish_obj.publisher_published_at = draft_obj.publisher_linked.publisher_published_at
 
         publish_obj.publisher_linked = None
         publish_obj.publisher_draft = draft_obj
@@ -144,6 +143,8 @@ class PublisherModelBase(models.Model):
             now = timezone.now()
             draft_obj.publisher_modified_at = now
             publish_obj.publisher_modified_at = now
+            draft_obj.publisher_published_at = now
+            publish_obj.publisher_published_at = now
 
         for override_field in overrides:
             setattr(publish_obj, override_field[0], override_field[1])
