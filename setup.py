@@ -12,28 +12,26 @@ def read_file(filename):
     try:
         return open(filepath).read()
     except IOError:
-        return ''
+        return ""
 
 
 def get_readme():
     """Return the README file contents. Supports text,rst, and markdown"""
-    for name in ('README', 'README.rst', 'README.md'):
+    for name in ("README", "README.rst", "README.md"):
         if os.path.exists(name):
             return read_file(name)
-    return ''
+    return ""
 
 
 setup(
-    name='mojob-publisher',
-    version=__import__('publisher').get_version().replace(' ', '-'),
+    name="django-model-publisher-ai",
+    version=__import__("publisher").get_version().replace(" ", "-"),
     description="""Handy mixin/abstract class for providing a "publisher workflow" to arbitrary Django models.""",
     long_description=get_readme(),
-    author='Marcin Urbanski',
-    author_email='marcin@mojob.io',
-    url='https://github.com/mojob/mojob-publisher',
-    packages=find_packages(exclude=['example*', ]),
+    author="Rich Temple",
+    author_email="rtemple@celerity.com",
+    url="https://github.com/natgeosociety/django-model-publisher-ai",
+    packages=find_packages(exclude=["example*"]),
     include_package_data=True,
-    classifiers=[
-        'Framework :: Django',
-    ],
+    classifiers=["Framework :: Django"],
 )

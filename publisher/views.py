@@ -5,7 +5,6 @@ from .middleware import get_draft_status
 
 
 class PublisherViewMixin(object):
-
     class Meta:
         abstract = True
 

@@ -13,34 +13,33 @@ from myapp.models import PublisherTestModel
 
 
 class PublisherTest(test.TestCase):
-
     def test_creating_model_creates_only_one_record(self):
-        PublisherTestModel.publisher_manager.create(title='Test model')
+        PublisherTestModel.publisher_manager.create(title="Test model")
         count = PublisherTestModel.publisher_manager.count()
         self.assertEqual(count, 1)
 
     def test_new_models_are_draft(self):
-        instance = PublisherTestModel(title='Test model')
+        instance = PublisherTestModel(title="Test model")
         self.assertTrue(instance.is_draft)
 
     def test_editing_a_record_does_not_create_a_duplicate(self):
-        instance = PublisherTestModel.publisher_manager.create(title='Test model')
-        instance.title = 'Updated test model'
+        instance = PublisherTestModel.publisher_manager.create(title="Test model")
+        instance.title = "Updated test model"
         instance.save()
         count = PublisherTestModel.publisher_manager.count()
         self.assertEqual(count, 1)
 
     def test_editing_a_draft_does_not_update_published_record(self):
-        title = 'Test model'
+        title = "Test model"
         instance = PublisherTestModel.publisher_manager.create(title=title)
         instance.publish()
-        instance.title = 'Updated test model'
+        instance.title = "Updated test model"
         instance.save()
         published_instance = PublisherTestModel.publisher_manager.published().get()
         self.assertEqual(published_instance.title, title)
 
     def test_publishing_creates_new_record(self):
-        instance = PublisherTestModel.publisher_manager.create(title='Test model')
+        instance = PublisherTestModel.publisher_manager.create(title="Test model")
         instance.publish()
 
         published = PublisherTestModel.publisher_manager.published().count()
@@ -50,7 +49,7 @@ class PublisherTest(test.TestCase):
         self.assertEqual(drafts, 1)
 
     def test_unpublishing_deletes_published_record(self):
-        instance = PublisherTestModel.publisher_manager.create(title='Test model')
+        instance = PublisherTestModel.publisher_manager.create(title="Test model")
         instance.publish()
         instance.unpublish()
 
@@ -61,7 +60,7 @@ class PublisherTest(test.TestCase):
         self.assertEqual(drafts, 1)
 
     def test_unpublished_record_can_be_republished(self):
-        instance = PublisherTestModel.publisher_manager.create(title='Test model')
+        instance = PublisherTestModel.publisher_manager.create(title="Test model")
         instance.publish()
         instance.unpublish()
         instance.publish()
@@ -73,12 +72,12 @@ class PublisherTest(test.TestCase):
         self.assertEqual(drafts, 1)
 
     def test_published_date_is_set_to_none_for_new_records(self):
-        draft = PublisherTestModel(title='Test model')
+        draft = PublisherTestModel(title="Test model")
         self.assertEqual(draft.publisher_published_at, None)
 
     def test_published_date_is_updated_when_publishing(self):
         now = timezone.now()
-        draft = PublisherTestModel.publisher_manager.create(title='Test model')
+        draft = PublisherTestModel.publisher_manager.create(title="Test model")
         draft.publish()
         draft = PublisherTestModel.publisher_manager.drafts().get()
         published = PublisherTestModel.publisher_manager.drafts().get()
@@ -89,7 +88,7 @@ class PublisherTest(test.TestCase):
 
     def test_published_date_is_not_changed_when_publishing_twice(self):
         published_date = datetime.datetime(1970, 1, 1, 0, 0, tzinfo=timezone.utc)
-        draft = PublisherTestModel.publisher_manager.create(title='Test model')
+        draft = PublisherTestModel.publisher_manager.create(title="Test model")
         draft.publish()
         published = PublisherTestModel.publisher_manager.drafts().get()
         draft.publisher_published_at = published_date
@@ -104,21 +103,21 @@ class PublisherTest(test.TestCase):
         self.assertEqual(published.publisher_published_at, published_date)
 
     def test_published_date_is_set_to_none_when_unpublished(self):
-        draft = PublisherTestModel.publisher_manager.create(title='Test model')
+        draft = PublisherTestModel.publisher_manager.create(title="Test model")
         draft.publish()
         draft.unpublish()
         self.assertIsNone(draft.publisher_published_at)
 
     def test_published_date_is_set_when_republished(self):
         now = timezone.now()
-        draft = PublisherTestModel.publisher_manager.create(title='Test model')
+        draft = PublisherTestModel.publisher_manager.create(title="Test model")
         draft.publish()
         draft.unpublish()
         draft.publish()
         self.assertGreaterEqual(draft.publisher_published_at, now)
 
     def test_deleting_draft_also_deletes_published_record(self):
-        instance = PublisherTestModel.publisher_manager.create(title='Test model')
+        instance = PublisherTestModel.publisher_manager.create(title="Test model")
         instance.publish()
         instance.delete()
 
@@ -129,7 +128,7 @@ class PublisherTest(test.TestCase):
         self.assertEqual(drafts, 0)
 
     def test_delete_published_does_not_delete_draft(self):
-        obj = PublisherTestModel.publisher_manager.create(title='Test model')
+        obj = PublisherTestModel.publisher_manager.create(title="Test model")
         obj.publish()
 
         published = PublisherTestModel.publisher_manager.published().get()
@@ -142,16 +141,16 @@ class PublisherTest(test.TestCase):
         self.assertEqual(drafts, 1)
 
     def test_reverting_reverts_draft_from_published_record(self):
-        title = 'Test model'
+        title = "Test model"
         instance = PublisherTestModel.publisher_manager.create(title=title)
         instance.publish()
-        instance.title = 'Updated test model'
+        instance.title = "Updated test model"
         instance.save()
         revert_instance = instance.revert_to_public()
         self.assertEqual(title, revert_instance.title)
 
     def test_only_draft_records_can_be_published_or_reverted(self):
-        draft = PublisherTestModel.publisher_manager.create(title='Test model')
+        draft = PublisherTestModel.publisher_manager.create(title="Test model")
         draft.publish()
 
         published = PublisherTestModel.publisher_manager.published().get()
@@ -173,7 +172,7 @@ class PublisherTest(test.TestCase):
         publisher_post_publish.connect(handle_signal)
 
         # call the function
-        instance = PublisherTestModel.publisher_manager.create(title='Test model')
+        instance = PublisherTestModel.publisher_manager.create(title="Test model")
         instance.publish()
 
         self.assertTrue(self.got_signal)
@@ -194,7 +193,7 @@ class PublisherTest(test.TestCase):
         publisher_post_unpublish.connect(handle_signal)
 
         # Call the function.
-        instance = PublisherTestModel.publisher_manager.create(title='Test model')
+        instance = PublisherTestModel.publisher_manager.create(title="Test model")
         instance.publish()
         instance.unpublish()
 
@@ -215,7 +214,7 @@ class PublisherTest(test.TestCase):
         publisher_post_unpublish.connect(handle_signal)
 
         # Call the function.
-        instance = PublisherTestModel.publisher_manager.create(title='Test model')
+        instance = PublisherTestModel.publisher_manager.create(title="Test model")
         instance.publish()
         instance.delete()
 
@@ -224,7 +223,6 @@ class PublisherTest(test.TestCase):
         self.assertEqual(self.signal_instance, instance)
 
     def test_middleware_detects_published_when_logged_out(self):
-
         class MockUser(object):
             is_staff = False
 
@@ -233,13 +231,12 @@ class PublisherTest(test.TestCase):
 
         class MockRequest(object):
             user = MockUser()
-            GET = {'edit': '1'}
+            GET = {"edit": "1"}
 
         mock_request = MockRequest()
         self.assertFalse(PublisherMiddleware.is_draft(mock_request))
 
     def test_middleware_detects_published_when_user_edit_parameter_is_missing(self):
-
         class MockUser(object):
             is_staff = True
 
@@ -254,7 +251,6 @@ class PublisherTest(test.TestCase):
         self.assertFalse(PublisherMiddleware.is_draft(mock_request))
 
     def test_middleware_detects_published_when_user_is_not_staff(self):
-
         class MockUser(object):
             is_staff = False
 
@@ -263,13 +259,14 @@ class PublisherTest(test.TestCase):
 
         class MockRequest(object):
             user = MockUser()
-            GET = {'edit': '1'}
+            GET = {"edit": "1"}
 
         mock_request = MockRequest()
         self.assertFalse(PublisherMiddleware.is_draft(mock_request))
 
-    def test_middleware_detects_draft_when_user_is_staff_and_edit_parameter_is_present(self):
-
+    def test_middleware_detects_draft_when_user_is_staff_and_edit_parameter_is_present(
+        self
+    ):
         class MockUser(object):
             is_staff = True
 
@@ -278,7 +275,7 @@ class PublisherTest(test.TestCase):
 
         class MockRequest(object):
             user = MockUser()
-            GET = {'edit': '1'}
+            GET = {"edit": "1"}
 
         mock_request = MockRequest()
         self.assertTrue(PublisherMiddleware.is_draft(mock_request))

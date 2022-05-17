@@ -5,19 +5,19 @@ from .middleware import get_draft_status
 
 
 class PublisherManager(models.Manager):
-
     def contribute_to_class(self, model, name):
         super(PublisherManager, self).contribute_to_class(model, name)
         models.signals.pre_delete.connect(publisher_pre_delete, model)
 
     def drafts(self):
-        return self.filter(publisher_is_draft=True)
+        from .models import PublisherModelBase
+
+        return self.filter(publisher_is_draft=PublisherModelBase.STATE_DRAFT)
 
     def published(self):
-        return self.filter(publisher_publisher_is_published=True)
+        from .models import PublisherModelBase
 
-    def unpublished(self):
-        return self.filter(publisher_is_draft=False, publisher_is_published=False)
+        return self.filter(publisher_is_draft=PublisherModelBase.STATE_PUBLISHED)
 
     def current(self):
         if get_draft_status():
