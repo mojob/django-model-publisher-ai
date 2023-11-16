@@ -12,26 +12,26 @@ def publisher_pre_delete(sender, **kwargs):
 
 
 # Sent when a model is about to copy draft data into the linked model (the draft is sent).
-publisher_pre_submit_changes = Signal(providing_args=['instance'])
+publisher_pre_submit_changes = Signal()
 
 # Sent when a model changes is submitted to the linked model (the draft is sent).
-publisher_post_submit_changes = Signal(providing_args=['instance'])
+publisher_post_submit_changes = Signal()
 
 # Sent when a model is about to be published (the draft is sent).
-publisher_pre_publish = Signal(providing_args=['instance'])
+publisher_pre_publish = Signal()
 
 
 # Sent when a model is being published, before the draft is saved (the draft is sent).
-publisher_publish_pre_save_draft = Signal(providing_args=['instance'])
+publisher_publish_pre_save_draft = Signal()
 
 
 # Sent when a model is published (the draft is sent)
-publisher_post_publish = Signal(providing_args=['instance'])
+publisher_post_publish = Signal()
 
 
 # Sent when a model is about to be unpublished (the draft is sent).
-publisher_pre_unpublish = Signal(providing_args=['instance'])
+publisher_pre_unpublish = Signal()
 
 
 # Sent when a model is unpublished (the draft is sent).
-publisher_post_unpublish = Signal(providing_args=['instance'])
+publisher_post_unpublish = Signal()
